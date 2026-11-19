@@ -1,0 +1,26 @@
+channel_name: "ClipVerse"          # shown as small watermark; change to your channel name
+uploads_per_run: 1
+privacy: public                     # public | unlisted | private  (use private for first tests)
+
+clip:
+  min_seconds: 20
+  max_seconds: 50
+  target_seconds: 35
+
+discovery:
+  max_age_days: 21                  # only clip videos uploaded recently (trending)
+  min_views: 5000
+  min_source_seconds: 60            # ignore sources shorter than this
+  max_source_seconds: 2400          # and longer than 40 min (download/transcribe time)
+  region: IN
+  results_per_query: 15
+
+transcription:
+  model: base                       # tiny | base | small  (small = better Hindi, slower)
+
+# YouTube category ids: 20 Gaming, 23 Comedy, 24 Entertainment
+categories:
+  gaming:  {youtube_category: 20, tags: ["gta 6", "gta vi", "gaming", "gaming clips", "shorts"]}
+  comedy:  {youtube_category: 23, tags: ["comedy", "funny", "standup", "hindi comedy", "shorts"]}
+  prank:   {youtube_category: 24, tags: ["prank", "funny prank", "public prank", "shorts"]}
+  default: {youtube_category: 24, tags: ["funny", "viral", "clips", "shorts"]}

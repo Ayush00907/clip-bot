@@ -1,0 +1,108 @@
+"""Collect candidate source videos — only ones with a valid permission basis."""
+import datetime as dt
+import re
+
+from . import yt
+
+VALID_PERMISSIONS = {"own", "creative_commons", "clipping_campaign", "written_permission"}
+
+
+def _video_id(url: str):
+    m = re.search(r"(?:v=|youtu\.be/|shorts/|live/)([A-Za-z0-9_-]{11})", url or "")
+    return m.group(1) if m else None
+
+
+def _iso_seconds(d):
+    import isodate
+    try:
+        return int(isodate.parse_duration(d).total_seconds())
+    except Exception:
+        return 0
+
+
+def _details(ids):
+    out = {}
+    for i in range(0, len(ids), 50):
+        res = yt.client().videos().list(
+            part="snippet,contentDetails,status,statistics", id=",".join(ids[i:i + 50])
+        ).execute()
+        for it in res.get("items", []):
+            out[it["id"]] = it
+    return out
+
+
+def _cand(item, src, permission):
+    sn = item["snippet"]
+    return {
+        "id": item["id"],
+        "url": f"https://www.youtube.com/watch?v={item['id']}",
+        "title": sn["title"],
+        "channel": sn["channelTitle"],
+        "channel_id": sn["channelId"],
+        "duration": _iso_seconds(item["contentDetails"]["duration"]),
+        "views": int(item.get("statistics", {}).get("viewCount", 0)),
+        "license": item["status"].get("license"),
+        "permission": permission,
+        "category": src.get("category", "default"),
+        "layout": src.get("layout", "blur_fit"),
+        "credit": src.get("credit") or sn["channelTitle"],
+    }
+
+
+def gather(sources: dict, cfg: dict, posted: set):
+    disc = cfg["discovery"]
+    after = (dt.datetime.utcnow() - dt.timedelta(days=disc["max_age_days"])).strftime("%Y-%m-%dT%H:%M:%SZ")
+    pending = []  # (video_id, src, permission)
+
+    for src in sources.get("manual") or []:
+        perm = src.get("permission")
+        vid = _video_id(src.get("url"))
+        if perm not in VALID_PERMISSIONS or not vid:
+            print(f"[skip] manual source without valid permission/url: {src}")
+            continue
+        pending.append((vid, src, perm))
+
+    for src in sources.get("allowed_channels") or []:
+        perm = src.get("permission")
+        if perm not in VALID_PERMISSIONS:
+            print(f"[skip] channel without valid permission: {src.get('channel_id')}")
+            continue
+        ch = yt.client().channels().list(part="contentDetails", id=src["channel_id"]).execute()
+        if not ch.get("items"):
+            continue
+        uploads = ch["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+        pl = yt.client().playlistItems().list(part="contentDetails", playlistId=uploads, maxResults=15).execute()
+        for it in pl.get("items", []):
+            pending.append((it["contentDetails"]["videoId"], src, perm))
+
+    for src in sources.get("creative_commons_search") or []:
+        res = yt.client().search().list(
+            part="id", q=src["query"], type="video", videoLicense="creativeCommon",
+            order="viewCount", publishedAfter=after, regionCode=disc.get("region", "IN"),
+            maxResults=disc.get("results_per_query", 15), safeSearch="moderate",
+        ).execute()
+        for it in res.get("items", []):
+            pending.append((it["id"]["videoId"], src, "creative_commons"))
+
+    ids = list(dict.fromkeys(v for v, _, _ in pending if v not in posted))
+    info = _details(ids) if ids else {}
+    seen, cands = set(), []
+    for vid, src, perm in pending:
+        if vid in seen or vid not in info:
+            continue
+        seen.add(vid)
+        c = _cand(info[vid], src, perm)
+        # Re-verify CC license from the video itself — never trust search alone.
+        if perm == "creative_commons" and c["license"] != "creativeCommon":
+            continue
+        if not (disc["min_source_seconds"] <= c["duration"] <= disc["max_source_seconds"]):
+            continue
+        if perm == "creative_commons" and c["views"] < disc["min_views"]:
+            continue
+        cands.append(c)
+
+    # Your own / permitted content first, then most-viewed CC videos.
+    rank = {"own": 0, "written_permission": 1, "clipping_campaign": 1, "creative_commons": 2}
+    cands.sort(key=lambda c: (rank[c["permission"]], -c["views"]))
+    print(f"[sources] {len(cands)} usable candidates")
+    return cands

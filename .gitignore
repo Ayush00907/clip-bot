@@ -1,0 +1,6 @@
+work/
+output/
+cookies.txt
+client_secret*.json
+token.json
+__pycache__/

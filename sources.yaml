@@ -1,0 +1,39 @@
+# ─────────────────────────────────────────────────────────────
+#  WHERE CLIPS COME FROM
+#  Every source needs a `permission` basis. The bot SKIPS anything without one.
+#    own                → your own recordings / your own channel
+#    creative_commons   → video is licensed CC-BY on YouTube (bot double-checks)
+#    clipping_campaign  → creator pays/allows clippers (Whop, ClipFarm, Vyro, etc.)
+#    written_permission → creator said yes by email/DM (keep the screenshot!)
+# ─────────────────────────────────────────────────────────────
+
+# 1) Specific videos you are allowed to clip (your GTA 6 gameplay uploads go here)
+manual:
+  # - url: https://www.youtube.com/watch?v=YOUR_GTA6_VIDEO
+  #   permission: own
+  #   category: gaming
+  #   credit: "@YourChannel"
+  #   layout: center_crop        # gameplay looks better cropped full-screen
+
+# 2) Channels that allow clipping. The bot pulls their newest uploads automatically.
+allowed_channels:
+  # - channel_id: UCxxxxxxxxxxxxxxxxxxxxxx
+  #   permission: clipping_campaign
+  #   category: comedy
+  #   credit: "@CreatorHandle"
+  #   proof: "https://whop.com/... campaign link or email date"
+
+# 3) Auto-discover CC-BY licensed videos on YouTube (fully automatic, free to reuse with credit)
+creative_commons_search:
+  - query: "GTA 6 gameplay"
+    category: gaming
+    layout: center_crop
+  - query: "GTA 6 funny moments"
+    category: gaming
+    layout: center_crop
+  - query: "funny prank"
+    category: prank
+  - query: "stand up comedy hindi"
+    category: comedy
+  - query: "comedy sketch funny"
+    category: comedy
