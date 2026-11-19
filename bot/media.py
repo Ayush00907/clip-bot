@@ -60,7 +60,10 @@ def download(url: str, out_dir: str, section=None) -> str:
         "--merge-output-format", "mp4", "--no-playlist", "-o", out, url,
     ]
     if section:  # only download part of a long stream
-        cmd[1:1] = ["--download-sections", f"*{section[0]}-{section[1]}", "--force-keyframes-at-cuts"]
+        # 720p and no re-encoding: a 10-minute stream section downloads in ~1 minute
+        cmd[1:1] = ["--download-sections", f"*{section[0]}-{section[1]}"]
+        i = cmd.index("-f")
+        cmd[i + 1] = "bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720]/b"
     r = subprocess.run(cmd, capture_output=True, text=True)
     print(r.stdout[-2000:], r.stderr[-2000:])
     if r.returncode != 0:

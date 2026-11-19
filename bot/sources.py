@@ -12,10 +12,19 @@ FOREIGN_WORDS = {"de", "del", "y", "con", "el", "los", "las", "que", "para", "po
                  "pour", "dan", "yang", "di", "ini", "jogo", "juego", "partida", "lo", "sin"}
 
 
+EN_WORDS = {"the", "is", "it", "to", "on", "in", "of", "and", "a", "my", "i", "you", "this", "that", "with",
+            "how", "what", "when", "best", "funny", "moments", "try", "not", "laugh", "first", "time",
+            "gets", "gets", "vs", "bad", "really", "pull", "off", "tries", "goes", "wrong", "can", "be"}
+
+
 def language_ok(title, lang, allowed):
     """True if the video looks Hindi/English (or whatever `allowed` lists)."""
-    if lang:
-        return lang.split("-")[0].lower() in allowed
+    words = re.findall(r"[a-z']+", title.lower())
+    english = sum(w in EN_WORDS for w in words) >= 2
+    if lang and lang.split("-")[0].lower() in allowed:
+        return True
+    if lang and not english:  # uploader says another language and the title isn't clearly English
+        return False
     for ch in title:
         if ch.isalpha() and not (ord(ch) < 0x250 or 0x900 <= ord(ch) <= 0x97F):
             return False  # Cyrillic, Arabic, Thai, Chinese, Korean, Japanese...
