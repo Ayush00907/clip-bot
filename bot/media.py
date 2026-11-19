@@ -68,8 +68,14 @@ def transcribe(path: str, model_size: str = "base"):
     """Returns (segments, words). Each word: {start, end, word}."""
     from faster_whisper import WhisperModel
 
+    # Decode with ffmpeg ourselves (faster-whisper's own decoder breaks with some PyAV versions)
+    raw = subprocess.run(
+        ["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", "16000", "-f", "s16le", "-"],
+        capture_output=True, check=True,
+    ).stdout
+    audio = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
     model = WhisperModel(model_size, device="cpu", compute_type="int8")
-    segs, info = model.transcribe(path, word_timestamps=True, vad_filter=True)
+    segs, info = model.transcribe(audio, word_timestamps=True, vad_filter=True)
     segments, words = [], []
     for s in segs:
         segments.append({"start": s.start, "end": s.end, "text": s.text.strip()})

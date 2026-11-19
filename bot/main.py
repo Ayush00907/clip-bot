@@ -35,7 +35,12 @@ def process(cand, cfg, dry_run):
     src = media.download(cand["url"], WORK)
     info = media.probe(src)
     loud = media.loudness_per_second(src)
-    segments, words, lang = media.transcribe(src, cfg["transcription"]["model"])
+    try:
+        segments, words, lang = media.transcribe(src, cfg["transcription"]["model"])
+    except Exception:
+        traceback.print_exc()
+        print("[whisper] transcription failed - picking by loudness, no captions")
+        segments, words = [], []
     meta = pick.choose(loud, segments, info["duration"], cand, cfg["clip"])
     os.makedirs(OUT, exist_ok=True)
     out = os.path.join(OUT, f"{cand['id']}_{int(meta['start'])}.mp4")
