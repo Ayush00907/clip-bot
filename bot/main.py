@@ -37,10 +37,14 @@ def save_state(state):
 def process(cand, cfg, dry_run):
     shutil.rmtree(WORK, ignore_errors=True)
     section = None
-    if cand["duration"] > cfg["discovery"]["max_source_seconds"]:
+    if cand.get("live"):
+        src = media.download_live(cand["url"], WORK)
+    elif cand["duration"] > cfg["discovery"]["max_source_seconds"]:
         done_near = {p.get("section_start", -9999) for p in load_state()["posted"] if p["source_id"] == cand["id"]}
         section = media.hottest_window(cand["url"], cand["duration"], skip=done_near)
-    src = media.download(cand["url"], WORK, section)
+        src = media.download(cand["url"], WORK, section)
+    else:
+        src = media.download(cand["url"], WORK)
     info = media.probe(src)
     loud = media.loudness_per_second(src)
     try:
@@ -84,12 +88,16 @@ def main():
     state = load_state()
     counts = {}
     for p in state["posted"]:
+        if p.get("live"):
+            continue  # a live marathon can be clipped any number of times
         counts[p["source_id"]] = counts.get(p["source_id"], 0) + (0 if p.get("section_start") is not None else 99)
         if p.get("section_start") is not None:
             counts[p["source_id"]] += 1
     # normal videos: clip once; long streams: up to 6 different moments
     posted = {k for k, n in counts.items() if n >= 6} | set(state.get("skipped", []))
 
+    camp_posts = [p.get("campaign") for p in state["posted"] if p.get("campaign")]
+    cfg["_last_campaign"] = camp_posts[-1] if camp_posts else None
     cands = sources.gather(srcs, cfg, posted)
     if not cands:
         print("No usable sources. Add videos/channels to sources.yaml.")
@@ -121,6 +129,7 @@ def main():
                 "source_id": cand["id"], "short_id": vid, "start": meta["start"], "end": meta["end"],
                 "title": meta["title"], "credit": cand["credit"], "permission": cand["permission"],
                 "section_start": meta.get("section_start"),
+                "live": bool(cand.get("live")),
                 "campaign": (cand.get("campaign") or {}).get("name"),
                 "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             })

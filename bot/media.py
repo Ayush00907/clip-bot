@@ -51,6 +51,25 @@ def hottest_window(url: str, duration: int, window: int = 600, skip: set = ()):
     return st, min(duration, st + window)
 
 
+def download_live(url: str, out_dir: str, seconds: int = 600) -> str:
+    """Record the most recent `seconds` of a live stream (reads the stream's DVR backlog)."""
+    os.makedirs(out_dir, exist_ok=True)
+    r = subprocess.run(["yt-dlp", *_cookie_args(), "-g", "-f", "b[height<=720]/b", url],
+                       capture_output=True, text=True, timeout=180)
+    if r.returncode != 0 or not r.stdout.strip():
+        if any(x in r.stderr for x in ("429", "403", "Sign in to confirm", "not a bot")):
+            raise BlockedError("YouTube blocked the live stream from GitHub's server. Refresh YT_COOKIES.")
+        raise RuntimeError("could not get live stream URL: " + r.stderr[-500:])
+    hls = r.stdout.strip().splitlines()[0]
+    out = os.path.join(out_dir, "source.mp4")
+    segs = seconds // 5 + 10  # YouTube live segments are ~5 s
+    cmd = ["ffmpeg", "-y", "-v", "error", "-live_start_index", f"-{segs}", "-i", hls,
+           "-t", str(seconds), "-c", "copy", "-bsf:a", "aac_adtstoasc", out]
+    print(f"[live] recording last {seconds // 60} min of the live stream")
+    subprocess.run(cmd, check=True, timeout=seconds + 600)
+    return out
+
+
 def download(url: str, out_dir: str, section=None) -> str:
     os.makedirs(out_dir, exist_ok=True)
     out = os.path.join(out_dir, "source.%(ext)s")

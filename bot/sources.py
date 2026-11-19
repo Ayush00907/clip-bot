@@ -73,6 +73,7 @@ def _cand(item, src, permission):
         "layout": src.get("layout", "blur_fit"),
         "credit": src.get("credit") or sn["channelTitle"],
         "published": sn.get("publishedAt", ""),
+        "live": sn.get("liveBroadcastContent") == "live",
         "campaign": src.get("campaign"),
         "title_must_contain": [w.lower() for w in src.get("title_must_contain", [])],
         "since": src.get("since", ""),
@@ -98,7 +99,10 @@ def gather(sources: dict, cfg: dict, posted: set):
         if perm not in VALID_PERMISSIONS:
             print(f"[skip] channel without valid permission: {src.get('channel_id')}")
             continue
-        ch = yt.client().channels().list(part="contentDetails", id=src["channel_id"]).execute()
+        if src.get("channel_id"):
+            ch = yt.client().channels().list(part="contentDetails", id=src["channel_id"]).execute()
+        else:  # e.g. handle: "@dylan.page."
+            ch = yt.client().channels().list(part="contentDetails", forHandle=src["handle"]).execute()
         if not ch.get("items"):
             continue
         uploads = ch["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
@@ -153,7 +157,10 @@ def gather(sources: dict, cfg: dict, posted: set):
             continue
         if c["since"] and c["published"][:10] < str(c["since"]):
             continue
-        if not (disc["min_source_seconds"] <= c["duration"] <= (c["max_source_seconds"] or disc["max_source_seconds"])):
+        if c["live"]:
+            if not c.get("campaign"):
+                continue  # only record live streams for clipping campaigns
+        elif not (disc["min_source_seconds"] <= c["duration"] <= (c["max_source_seconds"] or disc["max_source_seconds"])):
             continue
         if perm == "creative_commons" and c["views"] < disc["min_views"]:
             continue
@@ -161,6 +168,10 @@ def gather(sources: dict, cfg: dict, posted: set):
 
     # Your own / permitted content first, then most-viewed CC videos.
     rank = {"own": 0, "written_permission": 1, "clipping_campaign": 1, "creative_commons": 2}
-    cands.sort(key=lambda c: (rank[c["permission"]], -c["views"]))
+    cands.sort(key=lambda c: (rank[c["permission"]], not c["live"], -c["views"]))
+    # take turns between campaigns: the one used last time goes to the back of its group
+    last = cfg.get("_last_campaign")
+    if last:
+        cands.sort(key=lambda c: (rank[c["permission"]], ((c.get("campaign") or {}).get("name") == last)))
     print(f"[sources] {len(cands)} usable candidates")
     return cands

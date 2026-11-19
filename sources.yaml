@@ -32,6 +32,23 @@ allowed_channels:
       mention: "Kai Cenat"
       hashtags: ["#KaiCenat"]
       no_watermark: true
+
+  # Content Rewards: "$5,000 Dylan Page GTA VI Marathon" (joined 19 Nov 2026), $1 per 1K views.
+  # Rules: Dylan must be the main focus, #DylanPage in caption, English captions, no added
+  # watermarks/branding, no AI voices or footage. Marathon is 120 h LIVE on YouTube.
+  - handle: "@dylan.page."
+    permission: clipping_campaign
+    category: gaming
+    credit: "Dylan Page"
+    since: "2026-11-19"
+    max_source_seconds: 86400
+    recent: 10
+    proof: "https://contentrewards.com/c/campaigns/39753a1a-f1f3-491b-a8f6-0cfee0af0c97"
+    campaign:
+      name: "Dylan Page GTA VI Marathon (Content Rewards)"
+      mention: "Dylan Page"
+      hashtags: ["#DylanPage"]
+      no_watermark: true
   # - channel_id: UCxxxxxxxxxxxxxxxxxxxxxx
   #   permission: clipping_campaign
   #   category: comedy
