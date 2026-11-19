@@ -16,6 +16,7 @@ discovery:
   region: IN
   language: en                      # search results in this language (hi for Hindi); a query can override it
   results_per_query: 15
+  searches_per_run: 3                # each search = 100 quota units (4 runs/day x (3 searches + upload) fits)
 
 transcription:
   model: base                       # tiny | base | small  (small = better Hindi, slower)

@@ -92,7 +92,24 @@ def gather(sources: dict, cfg: dict, posted: set):
         for it in pl.get("items", []):
             pending.append((it["contentDetails"]["videoId"], src, perm))
 
-    for src in sources.get("creative_commons_search") or []:
+    # Searches cost 100 quota units each, so each run does a few: trending topics + 1-2 fixed
+    # queries taken in turn (a different one each run).
+    fixed = sources.get("creative_commons_search") or []
+    trend_cfg = sources.get("trending") or {}
+    searches = []
+    if trend_cfg.get("enabled", True):
+        from .trending import trending_queries
+        try:
+            searches += trending_queries(trend_cfg, disc.get("region", "IN"))
+        except Exception as e:
+            print(f"[trending] failed: {e}")
+    if fixed:
+        k = max(1, disc.get("searches_per_run", 3) - len(searches))
+        start = (int(dt.datetime.utcnow().timestamp()) // 3600) % len(fixed)
+        searches += [fixed[(start + i) % len(fixed)] for i in range(min(k, len(fixed)))]
+
+    for src in searches:
+        print(f"[search] {src['query']}")
         res = yt.client().search().list(
             part="id", q=src["query"], type="video", videoLicense="creativeCommon",
             order="viewCount", publishedAfter=after, regionCode=disc.get("region", "IN"),

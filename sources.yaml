@@ -23,7 +23,14 @@ allowed_channels:
   #   credit: "@CreatorHandle"
   #   proof: "https://whop.com/... campaign link or email date"
 
-# 3) Auto-discover CC-BY licensed videos on YouTube (fully automatic, free to reuse with credit)
+# 3) TRENDING: each run reads YouTube India's trending charts (gaming, comedy, entertainment),
+#    picks the hottest topics (e.g. "GTA 6 funny moments") and searches CC-BY videos about them.
+trending:
+  enabled: true
+  categories: [20, 23, 24]          # 20 Gaming, 23 Comedy, 24 Entertainment
+  queries_per_run: 2
+
+# 4) Fixed searches (one or two used per run, taking turns). Auto-discover CC-BY licensed videos on YouTube (fully automatic, free to reuse with credit)
 creative_commons_search:
   - query: "GTA 6 gameplay"
     category: gaming
@@ -38,3 +45,15 @@ creative_commons_search:
     language: hi
   - query: "comedy sketch funny"
     category: comedy
+  - query: "GTA 6 police chase"
+    category: gaming
+    layout: center_crop
+  - query: "GTA 6 glitch"
+    category: gaming
+    layout: center_crop
+  - query: "GTA 6 Vice City gameplay"
+    category: gaming
+    layout: center_crop
+  - query: "public prank india"
+    category: prank
+    language: hi
