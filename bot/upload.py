@@ -9,7 +9,8 @@ PERMISSION_LINE = {
 }
 
 
-def upload(path, cand, meta, cat_cfg, privacy):
+def build_metadata(cand, meta, cat_cfg):
+    """Title, description and tags for a Short (used for upload and for the .txt file)."""
     camp = cand.get("campaign") or {}
     title = meta["title"].strip()
     for h in camp.get("hashtags", []):
@@ -27,8 +28,32 @@ def upload(path, cand, meta, cat_cfg, privacy):
         "Follow for daily funny clips, pranks & GTA 6 moments 🔥",
         " ".join(camp.get("hashtags", []) + ["#" + t.replace(" ", "") for t in tags[:5]]),
     ]))
+    return title[:100], desc[:4900], tags
+
+
+def write_upload_sheet(path_txt, cand, meta, cat_cfg):
+    """Everything needed to upload this Short by hand, ready to copy-paste."""
+    title, desc, tags = build_metadata(cand, meta, cat_cfg)
+    camp = cand.get("campaign") or {}
+    lines = [
+        "TITLE (copy into YouTube):", title, "",
+        "DESCRIPTION (copy into YouTube):", desc, "",
+        "TAGS:", ", ".join(tags), "",
+        f"SOURCE: {cand['url']}  (moment {int(meta['start'])}s-{int(meta['end'])}s"
+        + (f" of the downloaded part starting at {meta['section_start']}s" if meta.get("section_start") else "") + ")",
+    ]
+    if camp:
+        lines += ["", f"CAMPAIGN: {camp.get('name')}",
+                  f"After uploading, submit the Short's link here: {cand.get('proof', '')}",
+                  "Rules: " + camp.get("rules", "see campaign page")]
+    with open(path_txt, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+def upload(path, cand, meta, cat_cfg, privacy):
+    title, desc, tags = build_metadata(cand, meta, cat_cfg)
     body = {
-        "snippet": {"title": title[:100], "description": desc[:4900], "tags": tags,
+        "snippet": {"title": title, "description": desc, "tags": tags,
                     "categoryId": str(cat_cfg["youtube_category"])},
         "status": {"privacyStatus": privacy, "selfDeclaredMadeForKids": False,
                    "containsSyntheticMedia": False},

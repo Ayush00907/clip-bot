@@ -51,7 +51,7 @@ def hottest_window(url: str, duration: int, window: int = 600, skip: set = ()):
     return st, min(duration, st + window)
 
 
-def download_live(url: str, out_dir: str, seconds: int = 600) -> str:
+def download_live(url: str, out_dir: str, seconds: int = 300) -> str:
     """Record the most recent `seconds` of a live stream (reads the stream's DVR backlog)."""
     os.makedirs(out_dir, exist_ok=True)
     r = subprocess.run(["yt-dlp", *_cookie_args(), "-g", "-f", "b[height<=720]/b", url],
@@ -62,10 +62,10 @@ def download_live(url: str, out_dir: str, seconds: int = 600) -> str:
         raise RuntimeError("could not get live stream URL: " + r.stderr[-500:])
     hls = r.stdout.strip().splitlines()[0]
     out = os.path.join(out_dir, "source.mp4")
-    segs = seconds // 5 + 10  # YouTube live segments are ~5 s
-    cmd = ["ffmpeg", "-y", "-v", "error", "-live_start_index", f"-{segs}", "-i", hls,
+    cmd = ["ffmpeg", "-y", "-v", "error", "-reconnect", "1", "-reconnect_streamed", "1",
+           "-reconnect_delay_max", "5", "-i", hls,
            "-t", str(seconds), "-c", "copy", "-bsf:a", "aac_adtstoasc", out]
-    print(f"[live] recording last {seconds // 60} min of the live stream")
+    print(f"[live] recording {seconds // 60} min of the live stream")
     subprocess.run(cmd, check=True, timeout=seconds + 600)
     return out
 

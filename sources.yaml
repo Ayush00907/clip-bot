@@ -29,6 +29,7 @@ allowed_channels:
     proof: "https://contentrewards.com/c/campaigns/1d2bcb00-c904-415f-aa82-f95b96baad86"
     campaign:
       name: "Kai Cenat GTA 6 Pool (Content Rewards)"
+      rules: "Kai must be the main focus; name + #KaiCenat in caption; no logos; nothing negative; pool pays once your clips total 750K views (1K+ per clip)."
       mention: "Kai Cenat"
       hashtags: ["#KaiCenat"]
       no_watermark: true
@@ -46,6 +47,7 @@ allowed_channels:
     proof: "https://contentrewards.com/c/campaigns/39753a1a-f1f3-491b-a8f6-0cfee0af0c97"
     campaign:
       name: "Dylan Page GTA VI Marathon (Content Rewards)"
+      rules: "Dylan must be the main focus; #DylanPage in caption; English only; no added watermarks; $1 per 1K views; campaign ends when the marathon ends."
       mention: "Dylan Page"
       hashtags: ["#DylanPage"]
       no_watermark: true

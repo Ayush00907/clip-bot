@@ -65,12 +65,14 @@ def process(cand, cfg, dry_run):
                   fonts_dir=os.path.join(ROOT, "fonts") if os.path.isdir(os.path.join(ROOT, "fonts")) else None)
     with open(out.replace(".mp4", ".json"), "w") as f:
         json.dump({"source": cand, "meta": meta}, f, indent=2, ensure_ascii=False)
-    if dry_run:
-        print(f"[dry-run] rendered {out} (not uploaded)")
-        return None, meta
-    from .upload import upload
+    from .upload import write_upload_sheet
     cat = cfg["categories"].get(cand["category"], cfg["categories"]["default"])
     meta["section_start"] = section[0] if section else None
+    write_upload_sheet(out.replace(".mp4", ".txt"), cand, meta, cat)
+    if dry_run or not cfg.get("upload_to_youtube", True):
+        print(f"[made] {out} + .txt (not uploaded - upload it yourself)")
+        return None, meta
+    from .upload import upload
     return upload(out, cand, meta, cat, cfg.get("privacy", "public")), meta
 
 

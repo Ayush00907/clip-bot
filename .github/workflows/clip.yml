@@ -82,6 +82,21 @@ jobs:
           done
           exit 1
 
+      # Every finished Short (+ its .txt with title/description) goes into one GitHub Release
+      # per day: repo > Releases > "Shorts DD-Mon-YYYY". Download and upload them yourself.
+      - name: Save Shorts to today's release
+        if: success() && !inputs.dry_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls output/*.mp4 >/dev/null 2>&1 || { echo "No Short made this run"; exit 0; }
+          TAG="shorts-$(TZ=Asia/Kolkata date +%Y-%m-%d)"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" \
+            --title "Shorts $(TZ=Asia/Kolkata date '+%d %b %Y')" \
+            --notes "Ready-to-upload Shorts. Each .mp4 has a .txt with the title, description, tags and (for campaigns) where to submit the link."
+          gh release upload "$TAG" output/*.mp4 output/*.txt --clobber
+          echo "Saved to https://github.com/${{ github.repository }}/releases/tag/$TAG"
+
       - name: Keep the video for checking (failed or dry runs only)
         if: failure() || inputs.dry_run
         uses: actions/upload-artifact@v4

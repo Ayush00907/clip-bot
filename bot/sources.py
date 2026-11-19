@@ -75,6 +75,7 @@ def _cand(item, src, permission):
         "published": sn.get("publishedAt", ""),
         "live": sn.get("liveBroadcastContent") == "live",
         "campaign": src.get("campaign"),
+        "proof": src.get("proof", ""),
         "title_must_contain": [w.lower() for w in src.get("title_must_contain", [])],
         "since": src.get("since", ""),
         "max_source_seconds": src.get("max_source_seconds"),
