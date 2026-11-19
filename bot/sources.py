@@ -63,6 +63,11 @@ def _cand(item, src, permission):
         "category": src.get("category", "default"),
         "layout": src.get("layout", "blur_fit"),
         "credit": src.get("credit") or sn["channelTitle"],
+        "published": sn.get("publishedAt", ""),
+        "campaign": src.get("campaign"),
+        "title_must_contain": [w.lower() for w in src.get("title_must_contain", [])],
+        "since": src.get("since", ""),
+        "max_source_seconds": src.get("max_source_seconds"),
     }
 
 
@@ -88,7 +93,8 @@ def gather(sources: dict, cfg: dict, posted: set):
         if not ch.get("items"):
             continue
         uploads = ch["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
-        pl = yt.client().playlistItems().list(part="contentDetails", playlistId=uploads, maxResults=15).execute()
+        pl = yt.client().playlistItems().list(part="contentDetails", playlistId=uploads,
+                                              maxResults=src.get("recent", 25)).execute()
         for it in pl.get("items", []):
             pending.append((it["contentDetails"]["videoId"], src, perm))
 
@@ -134,7 +140,11 @@ def gather(sources: dict, cfg: dict, posted: set):
                 c["title"], c["lang"], set(cfg.get("languages", ["hi", "en"]))):
             print(f"[skip] not Hindi/English: {c['title'][:70]}")
             continue
-        if not (disc["min_source_seconds"] <= c["duration"] <= disc["max_source_seconds"]):
+        if c["title_must_contain"] and not any(w in c["title"].lower() for w in c["title_must_contain"]):
+            continue
+        if c["since"] and c["published"][:10] < str(c["since"]):
+            continue
+        if not (disc["min_source_seconds"] <= c["duration"] <= (c["max_source_seconds"] or disc["max_source_seconds"])):
             continue
         if perm == "creative_commons" and c["views"] < disc["min_views"]:
             continue

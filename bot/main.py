@@ -36,7 +36,11 @@ def save_state(state):
 
 def process(cand, cfg, dry_run):
     shutil.rmtree(WORK, ignore_errors=True)
-    src = media.download(cand["url"], WORK)
+    section = None
+    if cand["duration"] > cfg["discovery"]["max_source_seconds"]:
+        done_near = {p.get("section_start", -9999) for p in load_state()["posted"] if p["source_id"] == cand["id"]}
+        section = media.hottest_window(cand["url"], cand["duration"], skip=done_near)
+    src = media.download(cand["url"], WORK, section)
     info = media.probe(src)
     loud = media.loudness_per_second(src)
     try:
@@ -51,8 +55,9 @@ def process(cand, cfg, dry_run):
     meta = pick.choose(loud, segments, info["duration"], cand, cfg["clip"])
     os.makedirs(OUT, exist_ok=True)
     out = os.path.join(OUT, f"{cand['id']}_{int(meta['start'])}.mp4")
+    camp = cand.get("campaign") or {}
     render.render(src, info, meta["start"], meta["end"], words, meta["hook"], cand["credit"],
-                  cfg["channel_name"], cand["layout"], out,
+                  "" if camp.get("no_watermark") else cfg["channel_name"], cand["layout"], out,
                   fonts_dir=os.path.join(ROOT, "fonts") if os.path.isdir(os.path.join(ROOT, "fonts")) else None)
     with open(out.replace(".mp4", ".json"), "w") as f:
         json.dump({"source": cand, "meta": meta}, f, indent=2, ensure_ascii=False)
@@ -61,6 +66,7 @@ def process(cand, cfg, dry_run):
         return None, meta
     from .upload import upload
     cat = cfg["categories"].get(cand["category"], cfg["categories"]["default"])
+    meta["section_start"] = section[0] if section else None
     return upload(out, cand, meta, cat, cfg.get("privacy", "public")), meta
 
 
@@ -76,7 +82,13 @@ def main():
     with open(os.path.join(ROOT, "sources.yaml")) as f:
         srcs = yaml.safe_load(f) or {}
     state = load_state()
-    posted = {p["source_id"] for p in state["posted"]} | set(state.get("skipped", []))
+    counts = {}
+    for p in state["posted"]:
+        counts[p["source_id"]] = counts.get(p["source_id"], 0) + (0 if p.get("section_start") is not None else 99)
+        if p.get("section_start") is not None:
+            counts[p["source_id"]] += 1
+    # normal videos: clip once; long streams: up to 6 different moments
+    posted = {k for k, n in counts.items() if n >= 6} | set(state.get("skipped", []))
 
     cands = sources.gather(srcs, cfg, posted)
     if not cands:
@@ -108,6 +120,8 @@ def main():
             state["posted"].append({
                 "source_id": cand["id"], "short_id": vid, "start": meta["start"], "end": meta["end"],
                 "title": meta["title"], "credit": cand["credit"], "permission": cand["permission"],
+                "section_start": meta.get("section_start"),
+                "campaign": (cand.get("campaign") or {}).get("name"),
                 "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             })
             save_state(state)

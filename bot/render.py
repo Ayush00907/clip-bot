@@ -67,7 +67,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     ev.append(f"Dialogue: 2,{_ts(0)},{_ts(dur)},Hook,,0,0,0,,"
               f"{{\\pos({W//2},{hook_y})\\fscx60\\fscy60\\t(0,180,\\fscx100\\fscy100)}}{_esc(_wrap(hook.upper(), 20))}")
     ev.append(f"Dialogue: 1,{_ts(0)},{_ts(dur)},Small,,0,0,0,,{{\\pos({W//2},{H-150})\\alpha&H40&}}"
-              f"{_esc(f'🎥 {credit}  •  {channel}')}")
+              f"{_esc(f'🎥 {credit}' + (f'  •  {channel}' if channel else ''))}")
     # Word-by-word karaoke captions
     for ch in _chunks(words):
         for i, w in enumerate(ch):

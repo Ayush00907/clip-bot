@@ -51,6 +51,15 @@ def heuristic(loud, segments, duration, clip):
     return best
 
 
+def _campaign_note(cand):
+    c = cand.get("campaign") or {}
+    if not c:
+        return ""
+    return (f"CAMPAIGN RULES: the clip must feature {c.get('mention')} as the main focus, "
+            f"never show {c.get('mention')} in a negative light, and the hook and title must "
+            f"mention {c.get('mention')} by name.\n")
+
+
 def gemini(segments, loud, cand, clip):
     key = os.environ.get("GEMINI_API_KEY")
     if not key or not segments:
@@ -63,7 +72,7 @@ Loudest seconds (likely laughs/reactions): {sorted(int(p) for p in peaks)}
 Transcript with timestamps (seconds):
 {lines}
 
-Pick the ONE funniest / most viral self-contained moment, {clip['min_seconds']}-{clip['max_seconds']} seconds long.
+{_campaign_note(cand)}Pick the ONE funniest / most viral self-contained moment, {clip['min_seconds']}-{clip['max_seconds']} seconds long.
 It must start with context the viewer understands and END right after the punchline/payoff.
 Return JSON only:
 {{"start": float, "end": float,
@@ -110,6 +119,17 @@ Return JSON only:
 
 
 def choose(loud, segments, duration, cand, clip):
+    meta = _choose(loud, segments, duration, cand, clip)
+    name = (cand.get("campaign") or {}).get("mention")
+    if name:
+        if name.lower() not in meta["hook"].lower():
+            meta["hook"] = f"{name.upper()} {meta['hook']}"
+        if name.lower() not in meta["title"].lower():
+            meta["title"] = f"{name}: {meta['title']}"
+    return meta
+
+
+def _choose(loud, segments, duration, cand, clip):
     ai = gemini(segments, loud, cand, clip)
     if ai:
         st, en = float(ai["start"]), float(ai["end"])

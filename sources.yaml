@@ -17,6 +17,21 @@ manual:
 
 # 2) Channels that allow clipping. The bot pulls their newest uploads automatically.
 allowed_channels:
+  # Content Rewards: "Kai Cenat - $10,000 GTA 6 Pool Campaign" (joined 19 Nov 2026)
+  # Rules: Kai must be the main focus, name + #KaiCenat in caption, no logos, nothing negative.
+  - channel_id: UCvCfpQXRXdJdL07pzTIA6Cw
+    permission: clipping_campaign
+    category: gaming
+    credit: "Kai Cenat"
+    title_must_contain: ["gta"]
+    since: "2026-11-18"
+    max_source_seconds: 86400        # his marathon streams are many hours long
+    proof: "https://contentrewards.com/c/campaigns/1d2bcb00-c904-415f-aa82-f95b96baad86"
+    campaign:
+      name: "Kai Cenat GTA 6 Pool (Content Rewards)"
+      mention: "Kai Cenat"
+      hashtags: ["#KaiCenat"]
+      no_watermark: true
   # - channel_id: UCxxxxxxxxxxxxxxxxxxxxxx
   #   permission: clipping_campaign
   #   category: comedy

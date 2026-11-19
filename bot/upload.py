@@ -10,7 +10,11 @@ PERMISSION_LINE = {
 
 
 def upload(path, cand, meta, cat_cfg, privacy):
+    camp = cand.get("campaign") or {}
     title = meta["title"].strip()
+    for h in camp.get("hashtags", []):
+        if h.lower() not in title.lower() and len(title) + len(h) < 90:
+            title += " " + h
     if "#shorts" not in title.lower() and len(title) <= 90:
         title += " #shorts"
     tags = list(dict.fromkeys((meta.get("tags") or []) + cat_cfg["tags"]))[:15]
@@ -21,7 +25,7 @@ def upload(path, cand, meta, cat_cfg, privacy):
         PERMISSION_LINE[cand["permission"]],
         "",
         "Follow for daily funny clips, pranks & GTA 6 moments 🔥",
-        " ".join("#" + t.replace(" ", "") for t in tags[:5]),
+        " ".join(camp.get("hashtags", []) + ["#" + t.replace(" ", "") for t in tags[:5]]),
     ]))
     body = {
         "snippet": {"title": title[:100], "description": desc[:4900], "tags": tags,
