@@ -16,6 +16,10 @@ WORK = os.path.join(ROOT, "work")
 OUT = os.path.join(ROOT, "output")
 
 
+class WrongLanguage(Exception):
+    pass
+
+
 def load_state():
     try:
         with open(STATE) as f:
@@ -40,7 +44,10 @@ def process(cand, cfg, dry_run):
     except Exception:
         traceback.print_exc()
         print("[whisper] transcription failed - picking by loudness, no captions")
-        segments, words = [], []
+        segments, words, lang = [], [], None
+    allowed = cfg.get("languages", ["hi", "en"])
+    if lang and len(words) > 30 and lang not in allowed and cand["permission"] == "creative_commons":
+        raise WrongLanguage(f"spoken language is '{lang}', not {allowed}")
     meta = pick.choose(loud, segments, info["duration"], cand, cfg["clip"])
     os.makedirs(OUT, exist_ok=True)
     out = os.path.join(OUT, f"{cand['id']}_{int(meta['start'])}.mp4")
@@ -69,7 +76,7 @@ def main():
     with open(os.path.join(ROOT, "sources.yaml")) as f:
         srcs = yaml.safe_load(f) or {}
     state = load_state()
-    posted = {p["source_id"] for p in state["posted"]}
+    posted = {p["source_id"] for p in state["posted"]} | set(state.get("skipped", []))
 
     cands = sources.gather(srcs, cfg, posted)
     if not cands:
@@ -77,12 +84,19 @@ def main():
         return 0
     done, tries = 0, 0
     for cand in cands:
-        if done >= cfg.get("uploads_per_run", 1) or tries >= 4:
+        if done >= cfg.get("uploads_per_run", 1) or tries >= 4 or cands.index(cand) >= 10:
             break
         tries += 1
         print(f"\n=== {cand['title']} ({cand['permission']}, {cand['duration']}s) ===")
         try:
             vid, meta = process(cand, cfg, dry_run)
+        except WrongLanguage as e:
+            print(f"[skip] {e}")
+            if not dry_run:
+                state.setdefault("skipped", []).append(cand["id"])
+                save_state(state)
+            tries -= 1  # cheap check, don't count it
+            continue
         except media.BlockedError as e:
             print(f"\nSTOPPING: {e}")
             break

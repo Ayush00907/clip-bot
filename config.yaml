@@ -1,5 +1,6 @@
 channel_name: "ClipVerse"          # shown as small watermark; change to your channel name
 uploads_per_run: 1
+languages: [hi, en]                 # only clip videos in these languages
 privacy: public                     # public | unlisted | private  (use private for first tests)
 
 clip:
@@ -9,7 +10,7 @@ clip:
 
 discovery:
   max_age_days: 21                  # only clip videos uploaded recently (trending)
-  min_views: 5000
+  min_views: 20000
   min_source_seconds: 60            # ignore sources shorter than this
   max_source_seconds: 2400          # and longer than 40 min (download/transcribe time)
   region: IN

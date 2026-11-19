@@ -6,6 +6,22 @@ from . import yt
 
 VALID_PERMISSIONS = {"own", "creative_commons", "clipping_campaign", "written_permission"}
 
+# Common words that give away Spanish/Portuguese/French/German/Indonesian titles
+FOREIGN_WORDS = {"de", "del", "y", "con", "el", "los", "las", "que", "para", "por", "una", "em", "com",
+                 "não", "uma", "und", "der", "die", "das", "mit", "le", "les", "des", "avec", "et",
+                 "pour", "dan", "yang", "di", "ini", "jogo", "juego", "partida", "lo", "sin"}
+
+
+def language_ok(title, lang, allowed):
+    """True if the video looks Hindi/English (or whatever `allowed` lists)."""
+    if lang:
+        return lang.split("-")[0].lower() in allowed
+    for ch in title:
+        if ch.isalpha() and not (ord(ch) < 0x250 or 0x900 <= ord(ch) <= 0x97F):
+            return False  # Cyrillic, Arabic, Thai, Chinese, Korean, Japanese...
+    words = re.findall(r"[a-záéíóúãõçñü]+", title.lower())
+    return sum(w in FOREIGN_WORDS for w in words) < 2
+
 
 def _video_id(url: str):
     m = re.search(r"(?:v=|youtu\.be/|shorts/|live/)([A-Za-z0-9_-]{11})", url or "")
@@ -42,6 +58,7 @@ def _cand(item, src, permission):
         "duration": _iso_seconds(item["contentDetails"]["duration"]),
         "views": int(item.get("statistics", {}).get("viewCount", 0)),
         "license": item["status"].get("license"),
+        "lang": sn.get("defaultAudioLanguage") or sn.get("defaultLanguage") or "",
         "permission": permission,
         "category": src.get("category", "default"),
         "layout": src.get("layout", "blur_fit"),
@@ -95,6 +112,10 @@ def gather(sources: dict, cfg: dict, posted: set):
         c = _cand(info[vid], src, perm)
         # Re-verify CC license from the video itself — never trust search alone.
         if perm == "creative_commons" and c["license"] != "creativeCommon":
+            continue
+        if c["permission"] == "creative_commons" and not language_ok(
+                c["title"], c["lang"], set(cfg.get("languages", ["hi", "en"]))):
+            print(f"[skip] not Hindi/English: {c['title'][:70]}")
             continue
         if not (disc["min_source_seconds"] <= c["duration"] <= disc["max_source_seconds"]):
             continue
