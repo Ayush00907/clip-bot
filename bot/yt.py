@@ -19,7 +19,14 @@ def client():
     from googleapiclient.discovery import build
 
     creds = None
-    if Path("token.json").exists():
+    tok = Path("token.json")
+    if tok.exists():
+        text = tok.read_text().strip()
+        if not text.startswith("{") or "refresh_token" not in text:
+            raise SystemExit(
+                "token.json is empty or invalid. The YT_TOKEN secret is missing or has the wrong "
+                "text. On your Mac run `python3 -m bot.main --auth`, then `pbcopy < token.json`, "
+                "and paste it into the YT_TOKEN secret (Settings > Secrets and variables > Actions).")
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
