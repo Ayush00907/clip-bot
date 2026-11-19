@@ -13,6 +13,7 @@ discovery:
   min_source_seconds: 60            # ignore sources shorter than this
   max_source_seconds: 2400          # and longer than 40 min (download/transcribe time)
   region: IN
+  language: en                      # search results in this language (hi for Hindi); a query can override it
   results_per_query: 15
 
 transcription:

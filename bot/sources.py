@@ -79,6 +79,7 @@ def gather(sources: dict, cfg: dict, posted: set):
         res = yt.client().search().list(
             part="id", q=src["query"], type="video", videoLicense="creativeCommon",
             order="viewCount", publishedAfter=after, regionCode=disc.get("region", "IN"),
+            relevanceLanguage=src.get("language", disc.get("language", "en")),
             maxResults=disc.get("results_per_query", 15), safeSearch="moderate",
         ).execute()
         for it in res.get("items", []):

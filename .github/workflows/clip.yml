@@ -35,6 +35,11 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y -q ffmpeg fonts-montserrat fonts-noto-core fonts-noto-color-emoji
 
+      # yt-dlp now needs a JavaScript runtime (deno) to read YouTube pages
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Install Python packages
         run: pip install -r requirements.txt
 

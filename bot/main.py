@@ -78,6 +78,9 @@ def main():
         print(f"\n=== {cand['title']} ({cand['permission']}, {cand['duration']}s) ===")
         try:
             vid, meta = process(cand, cfg, dry_run)
+        except media.BlockedError as e:
+            print(f"\nSTOPPING: {e}")
+            break
         except Exception:
             traceback.print_exc()
             continue

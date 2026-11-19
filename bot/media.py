@@ -6,6 +6,10 @@ import subprocess
 import numpy as np
 
 
+class BlockedError(Exception):
+    pass
+
+
 def run(cmd):
     print("$", " ".join(str(c) for c in cmd)[:300])
     subprocess.run(cmd, check=True)
@@ -15,13 +19,21 @@ def download(url: str, out_dir: str) -> str:
     os.makedirs(out_dir, exist_ok=True)
     out = os.path.join(out_dir, "source.%(ext)s")
     cmd = [
-        "yt-dlp", "-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080]/b",
+        "yt-dlp", "--sleep-requests", "1", "--retries", "3", "-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/b[height<=1080]/b",
         "--merge-output-format", "mp4", "--no-playlist", "-o", out, url,
     ]
     cookies = os.environ.get("YT_COOKIES_FILE")
-    if cookies and os.path.exists(cookies):
+    if cookies and os.path.exists(cookies) and os.path.getsize(cookies) > 0:
         cmd[1:1] = ["--cookies", cookies]
-    run(cmd)
+    else:
+        print("[download] no YT_COOKIES secret - YouTube often blocks GitHub servers without it")
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    print(r.stdout[-2000:], r.stderr[-2000:])
+    if r.returncode != 0:
+        if any(x in r.stderr for x in ("429", "403", "Sign in to confirm", "not a bot")):
+            raise BlockedError("YouTube blocked the download from GitHub's server. Add/refresh the "
+                               "YT_COOKIES secret (see README).")
+        raise RuntimeError("yt-dlp failed")
     return os.path.join(out_dir, "source.mp4")
 
 

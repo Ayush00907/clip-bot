@@ -35,5 +35,6 @@ creative_commons_search:
     category: prank
   - query: "stand up comedy hindi"
     category: comedy
+    language: hi
   - query: "comedy sketch funny"
     category: comedy
