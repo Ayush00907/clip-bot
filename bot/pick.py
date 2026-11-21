@@ -89,10 +89,13 @@ def _campaign_note(cand):
 
 def gemini(segments, loud, cand, clip):
     key = os.environ.get("GEMINI_API_KEY")
-    if not key or not segments:
+    if not key:
         return None
     peaks = np.argsort(loud)[-12:]
     lines = "\n".join(f"[{s['start']:.1f}-{s['end']:.1f}] {s['text']}" for s in segments)[:60000]
+    if not lines:
+        lines = ("(no speech - pure gameplay/music. Choose start/end around the loudest seconds and write the "
+                 "title and hook from the source video's title and what is likely happening.)")
     prompt = f"""You are an expert YouTube Shorts clip editor for an Indian audience (Hindi/Hinglish/English).
 Source video: "{cand['title']}" by {cand['channel']} (category: {cand['category']}).
 Loudest seconds (likely laughs/reactions): {sorted(int(p) for p in peaks)}

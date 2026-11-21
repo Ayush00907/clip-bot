@@ -14,6 +14,14 @@ def _ts(t):
     return f"{int(h)}:{int(m):02d}:{s:05.2f}"
 
 
+EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D\U0001F1E6-\U0001F1FF]+")
+
+
+def _plain(text):
+    """Caption fonts can't draw emoji (they show as boxes), so drop them from on-screen text."""
+    return re.sub(r"\s{2,}", " ", EMOJI.sub("", text)).strip()
+
+
 def _esc(text):
     return text.replace("\\", "").replace("{", "(").replace("}", ")").replace("\n", " ")
 
@@ -64,10 +72,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
     ev = []
     # Hook: pops in, stays the whole clip
-    ev.append(f"Dialogue: 2,{_ts(0)},{_ts(dur)},Hook,,0,0,0,,"
-              f"{{\\pos({W//2},{hook_y})\\fscx60\\fscy60\\t(0,180,\\fscx100\\fscy100)}}{_wrap(_esc(hook.upper()), 20)}")
+    if hook:
+      ev.append(f"Dialogue: 2,{_ts(0)},{_ts(dur)},Hook,,0,0,0,,"
+              f"{{\\pos({W//2},{hook_y})\\fscx60\\fscy60\\t(0,180,\\fscx100\\fscy100)}}{_wrap(_esc(_plain(hook).upper()), 20)}")
     ev.append(f"Dialogue: 1,{_ts(0)},{_ts(dur)},Small,,0,0,0,,{{\\pos({W//2},{H-150})\\alpha&H40&}}"
-              f"{_esc(f'🎥 {credit}' + (f'  •  {channel}' if channel else ''))}")
+              f"{_esc(_plain(f'Credit: {credit}' + (f'  |  {channel}' if channel else '')))}")
     # Word-by-word karaoke captions
     for ch in _chunks(words):
         for i, w in enumerate(ch):
@@ -101,6 +110,9 @@ def render(src, info, start, end, words, hook, credit, channel, layout, out, fon
               f"[b]scale={W}:{fg_h},setsar=1[fg];[bg][fg]overlay=0:{top}[base]")
         caption_y, hook_y = min(H - 330, top + fg_h + 170), max(220, top - 190)
     ass = os.path.splitext(out)[0] + ".ass"
+    if vertical:
+        # source is already a Short: it usually has its own text at the top - don't cover it
+        hook = ""
     if overlay:  # campaign logo sits at the very top, so push the hook below it
         hook_y = max(hook_y, 420)
     build_ass(ass, rel, dur, hook, credit, channel, caption_y, hook_y)
