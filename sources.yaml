@@ -57,6 +57,53 @@ allowed_channels:
   #   credit: "@CreatorHandle"
   #   proof: "https://whop.com/... campaign link or email date"
 
+  # Content Rewards: "KreekCraft GTA 6 Clipping" (joined 21 Nov 2026), $0.50 per 1K views.
+  # Rules: his logo overlay visible the whole clip; caption "Watch KreekCraft on YouTube and Twitch";
+  # #GTA6 #KreekCraft #GrandTheftAutoVI; only his GTA 6 streams; keep clips public 30+ days.
+  - handle: "@Kreek"
+    permission: clipping_campaign
+    category: gaming
+    credit: "KreekCraft"
+    title_must_contain: ["gta"]
+    since: "2026-11-18"
+    max_source_seconds: 86400
+    proof: "https://contentrewards.com/c/campaigns/2eaa14fb-6927-4136-897e-b096e0d907d6"
+    campaign:
+      name: "KreekCraft GTA 6 (Content Rewards)"
+      mention: "KreekCraft"
+      hashtags: ["#GTA6", "#KreekCraft", "#GrandTheftAutoVI"]
+      caption_line: "Watch KreekCraft on YouTube and Twitch!"
+      overlay_url: "https://crusercontent.com/organizations/43893b4f-434d-549b-9037-4f1c62984ff2/campaigns/references/assets/a6688393-4374-492e-8ec3-059554a1870f.webp"
+      no_watermark: true
+      rules: "KreekCraft overlay visible whole clip; caption must say 'Watch KreekCraft on YouTube and Twitch' + #GTA6 #KreekCraft #GrandTheftAutoVI; keep public 30 days; 40% US/UK/CA/AU viewers for payout."
+
+# Streamers whose GTA 6 marathons are on Twitch (past broadcasts are clipped).
+twitch_channels:
+  # Content Rewards (Reach): "$12,500 LACY GTA VI Marathon Pool" (joined 21 Nov 2026)
+  - login: lacy
+    permission: clipping_campaign
+    credit: "LACY"
+    since: "2026-11-18"
+    proof: "https://contentrewards.com/c/campaigns/a5c63fad-cd53-4b81-9305-4a2d1696872a"
+    campaign:
+      name: "LACY GTA VI Marathon (Content Rewards)"
+      mention: "LACY"
+      hashtags: ["#LACY"]
+      no_watermark: true
+      rules: "LACY main focus, name in caption/overlay + #LACY, no logos, nothing negative. Pool: 750K total views and 50% native-English audience to be paid. Submit within 30 min of posting."
+  # Content Rewards (Reach): "$5,000 Clix GTA VI Marathon Pool" (joined 21 Nov 2026)
+  - login: clix
+    permission: clipping_campaign
+    credit: "Clix"
+    since: "2026-11-18"
+    proof: "https://contentrewards.com/c/campaigns/985dc674-c75e-44fc-ac87-1b1506324389"
+    campaign:
+      name: "Clix GTA VI Marathon (Content Rewards)"
+      mention: "Clix"
+      hashtags: ["#Clix"]
+      no_watermark: true
+      rules: "Clix main focus, name in caption/overlay + #Clix, no logos, no AI. Pool: 400K total views and 50% native-English audience to be paid. Submit within 30 min of posting."
+
 # 3) TRENDING: each run reads YouTube India's trending charts (gaming, comedy, entertainment),
 #    picks the hottest topics (e.g. "GTA 6 funny moments") and searches CC-BY videos about them.
 trending:

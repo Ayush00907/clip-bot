@@ -65,7 +65,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     ev = []
     # Hook: pops in, stays the whole clip
     ev.append(f"Dialogue: 2,{_ts(0)},{_ts(dur)},Hook,,0,0,0,,"
-              f"{{\\pos({W//2},{hook_y})\\fscx60\\fscy60\\t(0,180,\\fscx100\\fscy100)}}{_esc(_wrap(hook.upper(), 20))}")
+              f"{{\\pos({W//2},{hook_y})\\fscx60\\fscy60\\t(0,180,\\fscx100\\fscy100)}}{_wrap(_esc(hook.upper()), 20)}")
     ev.append(f"Dialogue: 1,{_ts(0)},{_ts(dur)},Small,,0,0,0,,{{\\pos({W//2},{H-150})\\alpha&H40&}}"
               f"{_esc(f'🎥 {credit}' + (f'  •  {channel}' if channel else ''))}")
     # Word-by-word karaoke captions
@@ -85,7 +85,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         f.write(head + "\n".join(ev) + "\n")
 
 
-def render(src, info, start, end, words, hook, credit, channel, layout, out, fonts_dir=None):
+def render(src, info, start, end, words, hook, credit, channel, layout, out, fonts_dir=None, overlay=None):
     dur = end - start
     rel = [{"start": w["start"] - start, "end": w["end"] - start, "word": w["word"]}
            for w in words if start - 0.05 <= w["start"] < end and w["word"]]
@@ -101,12 +101,20 @@ def render(src, info, start, end, words, hook, credit, channel, layout, out, fon
               f"[b]scale={W}:{fg_h},setsar=1[fg];[bg][fg]overlay=0:{top}[base]")
         caption_y, hook_y = min(H - 330, top + fg_h + 170), max(220, top - 190)
     ass = os.path.splitext(out)[0] + ".ass"
+    if overlay:  # campaign logo sits at the very top, so push the hook below it
+        hook_y = max(hook_y, 420)
     build_ass(ass, rel, dur, hook, credit, channel, caption_y, hook_y)
     sub = f"subtitles={ass}" + (f":fontsdir={fonts_dir}" if fonts_dir else "")
     # gentle 3% zoom-in over the clip so it isn't a static re-upload
-    zoom = f"[base]scale=w='{W}*(1+0.03*t/{dur:.2f})':h=-2:eval=frame,crop={W}:{H},{sub},fps=30,format=yuv420p[v]"
-    cmd = ["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.2f}", "-t", f"{dur:.2f}", "-i", src,
-           "-filter_complex", f"{vf};{zoom}", "-map", "[v]", "-map", "0:a?",
+    zoom = f"[base]scale=w='{W}*(1+0.03*t/{dur:.2f})':h=-2:eval=frame,crop={W}:{H},{sub},fps=30"
+    inputs = ["-ss", f"{start:.2f}", "-t", f"{dur:.2f}", "-i", src]
+    if overlay:  # required campaign logo, visible for the whole clip
+        inputs += ["-loop", "1", "-i", overlay]
+        graph = f"{vf};{zoom}[z];[1:v]scale=600:-1[lg];[z][lg]overlay=(W-w)/2:70:shortest=1,format=yuv420p[v]"
+    else:
+        graph = f"{vf};{zoom},format=yuv420p[v]"
+    cmd = ["ffmpeg", "-y", "-v", "error", *inputs,
+           "-filter_complex", graph, "-map", "[v]", "-map", "0:a?",
            "-af", "loudnorm=I=-14:TP=-1.5:LRA=11,afade=t=out:st={:.2f}:d=0.4".format(max(0, dur - 0.4)),
            "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-c:a", "aac", "-b:a", "160k",
            "-movflags", "+faststart", out]

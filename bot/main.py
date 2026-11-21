@@ -60,8 +60,18 @@ def process(cand, cfg, dry_run):
     os.makedirs(OUT, exist_ok=True)
     out = os.path.join(OUT, f"{cand['id']}_{int(meta['start'])}.mp4")
     camp = cand.get("campaign") or {}
+    overlay = None
+    if camp.get("overlay_url"):
+        import requests
+        overlay = os.path.join(WORK, "overlay.png")
+        r = requests.get(camp["overlay_url"], timeout=60)
+        r.raise_for_status()
+        raw = os.path.join(WORK, "overlay_raw")
+        open(raw, "wb").write(r.content)
+        media.run(["ffmpeg", "-y", "-v", "error", "-i", raw, overlay])  # webp -> png (keeps transparency)
     render.render(src, info, meta["start"], meta["end"], words, meta["hook"], cand["credit"],
                   "" if camp.get("no_watermark") else cfg["channel_name"], cand["layout"], out,
+                  overlay=overlay,
                   fonts_dir=os.path.join(ROOT, "fonts") if os.path.isdir(os.path.join(ROOT, "fonts")) else None)
     with open(out.replace(".mp4", ".json"), "w") as f:
         json.dump({"source": cand, "meta": meta}, f, indent=2, ensure_ascii=False)
@@ -98,8 +108,8 @@ def main():
     # normal videos: clip once; long streams: up to 6 different moments
     posted = {k for k, n in counts.items() if n >= 6} | set(state.get("skipped", []))
 
-    camp_posts = [p.get("campaign") for p in state["posted"] if p.get("campaign")]
-    cfg["_last_campaign"] = camp_posts[-1] if camp_posts else None
+    # when each campaign was last used (index in the log) -> take turns between campaigns
+    cfg["_campaign_last"] = {p["campaign"]: i for i, p in enumerate(state["posted"]) if p.get("campaign")}
     cands = sources.gather(srcs, cfg, posted)
     if not cands:
         print("No usable sources. Add videos/channels to sources.yaml.")

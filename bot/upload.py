@@ -20,6 +20,7 @@ def build_metadata(cand, meta, cat_cfg):
         title += " #shorts"
     tags = list(dict.fromkeys((meta.get("tags") or []) + cat_cfg["tags"]))[:15]
     desc = "\n".join(filter(None, [
+        camp.get("caption_line", ""),
         meta.get("context", ""),
         "",
         f"🎥 Credit: {cand['credit']} — full video: {cand['url']}",

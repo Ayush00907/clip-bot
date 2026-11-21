@@ -82,6 +82,42 @@ def _cand(item, src, permission):
     }
 
 
+def twitch_candidates(channels, posted):
+    """Recent Twitch VODs (past broadcasts) of campaign streamers, via yt-dlp."""
+    import json as _json
+    import subprocess
+    out = []
+    for src in channels:
+        if src.get("permission") not in VALID_PERMISSIONS:
+            continue
+        url = f"https://www.twitch.tv/{src['login']}/videos?filter=archives&sort=time"
+        try:
+            r = subprocess.run(["yt-dlp", "--flat-playlist", "--playlist-end", str(src.get("recent", 10)), "-J", url],
+                               capture_output=True, text=True, timeout=180)
+            entries = _json.loads(r.stdout).get("entries", []) if r.returncode == 0 else []
+        except Exception as e:
+            print(f"[twitch] {src['login']}: {e}")
+            entries = []
+        print(f"[twitch] {src['login']}: {len(entries)} recent broadcasts")
+        for e in entries:
+            vid = "tw" + str(e.get("id", "")).lstrip("v")
+            if vid in posted:
+                continue
+            ts = e.get("timestamp")
+            out.append({
+                "id": vid, "url": f"https://www.twitch.tv/videos/{str(e.get('id', '')).lstrip('v')}",
+                "title": e.get("title") or "", "channel": src["login"], "channel_id": src["login"],
+                "duration": int(e.get("duration") or 0), "views": int(e.get("view_count") or 0),
+                "license": "", "lang": "en", "permission": src["permission"],
+                "category": src.get("category", "gaming"), "layout": src.get("layout", "blur_fit"),
+                "credit": src.get("credit") or src["login"],
+                "published": dt.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%dT%H:%M:%SZ") if ts else "",
+                "live": False, "campaign": src.get("campaign"), "proof": src.get("proof", ""),
+                "title_must_contain": [], "since": src.get("since", ""), "max_source_seconds": 10 ** 6,
+            })
+    return out
+
+
 def gather(sources: dict, cfg: dict, posted: set):
     disc = cfg["discovery"]
     after = (dt.datetime.utcnow() - dt.timedelta(days=disc["max_age_days"])).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -139,9 +175,21 @@ def gather(sources: dict, cfg: dict, posted: set):
         for it in res.get("items", []):
             pending.append((it["id"]["videoId"], src, "creative_commons"))
 
+    twitch = twitch_candidates(sources.get("twitch_channels") or [], posted)
+
     ids = list(dict.fromkeys(v for v, _, _ in pending if v not in posted))
     info = _details(ids) if ids else {}
     seen, cands = set(), []
+    for c in twitch:
+        topic = [w.lower() for w in cfg.get("only_topic", [])]
+        if topic and not any(w in c["title"].lower() for w in topic):
+            print(f"[skip] not GTA 6: {c['title'][:70]}")
+            continue
+        if c["since"] and c["published"][:10] < str(c["since"]):
+            continue
+        if c["duration"] < disc["min_source_seconds"]:
+            continue
+        cands.append(c)
     for vid, src, perm in pending:
         if vid in seen or vid not in info:
             continue
@@ -174,9 +222,8 @@ def gather(sources: dict, cfg: dict, posted: set):
     # Your own / permitted content first, then most-viewed CC videos.
     rank = {"own": 0, "written_permission": 1, "clipping_campaign": 1, "creative_commons": 2}
     cands.sort(key=lambda c: (rank[c["permission"]], not c["live"], -c["views"]))
-    # take turns between campaigns: the one used last time goes to the back of its group
-    last = cfg.get("_last_campaign")
-    if last:
-        cands.sort(key=lambda c: (rank[c["permission"]], ((c.get("campaign") or {}).get("name") == last)))
+    # take turns between campaigns: the one used longest ago (or never) comes first
+    last = cfg.get("_campaign_last", {})
+    cands.sort(key=lambda c: (rank[c["permission"]], last.get((c.get("campaign") or {}).get("name"), -1)))
     print(f"[sources] {len(cands)} usable candidates")
     return cands
