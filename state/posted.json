@@ -35,6 +35,19 @@
       "live": true,
       "campaign": "Dylan Page GTA VI Marathon (Content Rewards)",
       "at": "2026-11-21T07:37:12Z"
+    },
+    {
+      "source_id": "VZqAPdUvqnQ",
+      "short_id": "hcExztPGhEI",
+      "start": 512.6,
+      "end": 545.0,
+      "title": "Kai Cenat's first GTA 6 mission is wild! 🎮",
+      "credit": "Kai Cenat",
+      "permission": "clipping_campaign",
+      "section_start": 29995,
+      "live": false,
+      "campaign": "Kai Cenat GTA 6 Pool (Content Rewards)",
+      "at": "2026-11-21T09:24:34Z"
     }
   ]
 }
