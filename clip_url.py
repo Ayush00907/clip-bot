@@ -52,9 +52,10 @@ def main():
             try:
                 import json
                 import subprocess
-                info = json.loads(subprocess.run(["yt-dlp", "-J", "--no-playlist", a.source],
-                                                 capture_output=True, text=True).stdout or "{}")
-                dur = int(info.get("duration") or 0)
+                r = subprocess.run(["yt-dlp", *media._cookie_args(), "--no-playlist", "--skip-download",
+                                    "--print", "duration", a.source], capture_output=True, text=True)
+                dur = int(float((r.stdout.strip().splitlines() or ["0"])[-1] or 0)) if r.returncode == 0 else 0
+                print(f"Video length: {dur // 60} min")
                 if dur > 2400:  # long stream: only the most replayed ~10 minutes
                     section = media.hottest_window(a.source, dur)
             except Exception as e:
@@ -62,6 +63,17 @@ def main():
         src = media.download(a.source, work, section)
 
     info = media.probe(src)
+    if info["duration"] > 2700 and not a.full:
+        # safety net: never transcribe hours of video - keep the loudest 10 minutes
+        lo = media.loudness_per_second(src)
+        win = 600
+        sums = np.convolve(lo - lo.min(), np.ones(win), "valid") if len(lo) > win else np.array([0])
+        st = int(np.argmax(sums))
+        cut = os.path.join(work, "part.mp4")
+        media.run(["ffmpeg", "-y", "-v", "error", "-ss", str(st), "-t", str(win), "-i", src, "-c", "copy", cut])
+        print(f"Long video: using the loudest 10 minutes starting at {st // 60} min")
+        src = cut
+        info = media.probe(src)
     print(f"Video: {info['w']}x{info['h']}, {info['duration'] / 60:.1f} min")
     loud = media.loudness_per_second(src)
     try:
