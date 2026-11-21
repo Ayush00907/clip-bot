@@ -12,6 +12,13 @@ GEMINI_MODELS = ([os.environ["GEMINI_MODEL"]] if os.environ.get("GEMINI_MODEL") 
                  ["gemini-3.1-flash-lite", "gemini-3.8-flash",
                   "gemini-3-flash-preview", "gemini-4-hydrogen"])
 
+STYLE = os.environ.get("TITLE_STYLE", "hinglish")
+
+HOOKS_HI = {
+    "gaming": ["END TAK DEKHO 💀", "YE KYA HO GAYA BHAI 😭", "GTA 6 MEIN PAGALPAN 😂", "BHAI YE TOH INSANE HAI 🔥"],
+    "default": ["END TAK DEKHO 💀", "HASI NAHI RUKEGI 😂"],
+}
+
 HOOKS = {
     "gaming": ["WAIT FOR IT 💀", "GTA 6 IS INSANE", "NOBODY EXPECTED THIS", "THIS GAME IS WILD"],
     "comedy": ["HE REALLY SAID THAT 😭", "WAIT FOR THE ENDING", "CROWD LOST IT 😂", "NO WAY HE SAID THIS"],
@@ -51,6 +58,26 @@ def heuristic(loud, segments, duration, clip):
     return best
 
 
+def hinglish(cand):
+    """Hinglish for the Indian audience, unless a campaign requires English."""
+    return os.environ.get("TITLE_STYLE", STYLE) == "hinglish" and not (cand.get("campaign") or {}).get("english_only")
+
+
+def _lang_rule(cand, field):
+    if hinglish(cand):
+        return {
+            "title": "catchy Shorts title in HINGLISH (Hindi written in English letters mixed with English, "
+                     "like Indian gaming YouTubers write), max 70 chars, 1 emoji, keep names and 'GTA 6' as is, "
+                     "no clickbait lies. Example: 'Kai Cenat ka GTA 6 mein cheese pe pagalpan 😂'",
+            "hook": "on-screen hook in HINGLISH, max 6 words, ALL CAPS, e.g. 'YE KYA HO GAYA BHAI 😭' or "
+                    "'END TAK DEKHO 💀'",
+            "context": "one Hinglish sentence of your own take for the description",
+        }[field]
+    return {"title": "catchy Shorts title in English, max 70 chars, 1 emoji, no clickbait lies",
+            "hook": "on-screen hook text in English, max 7 words, ALL CAPS",
+            "context": "one-sentence original take/context for the description (your own words)"}[field]
+
+
 def _campaign_note(cand):
     c = cand.get("campaign") or {}
     if not c:
@@ -76,9 +103,9 @@ Transcript with timestamps (seconds):
 It must start with context the viewer understands and END right after the punchline/payoff.
 Return JSON only:
 {{"start": float, "end": float,
- "title": "catchy Shorts title, max 70 chars, Hinglish ok, 1 emoji, no clickbait lies",
- "hook": "on-screen hook text, max 7 words, ALL CAPS",
- "context": "one-sentence original take/context for the description (your own words)",
+ "title": "{_lang_rule(cand, 'title')}",
+ "hook": "{_lang_rule(cand, 'hook')}",
+ "context": "{_lang_rule(cand, 'context')}",
  "tags": ["5-8 lowercase tags"]}}"""
     for model in GEMINI_MODELS:
         for attempt in range(3):
@@ -142,7 +169,8 @@ def _choose(loud, segments, duration, cand, clip):
             ai["start"], ai["end"] = st, min(en, duration)
             return ai
     st, en = heuristic(loud, segments, duration, clip)
-    hook = random.choice(HOOKS.get(cand["category"], HOOKS["default"]))
+    pool = HOOKS_HI if hinglish(cand) else HOOKS
+    hook = random.choice(pool.get(cand["category"], pool["default"]))
     base = cand["title"].split("|")[0].split("#")[0].strip()[:55]
     print(f"[pick] heuristic {st:.1f}-{en:.1f}")
     return {"start": st, "end": en, "title": f"{base} 😂", "hook": hook, "context": "", "tags": []}

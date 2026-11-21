@@ -116,6 +116,7 @@ def main():
         cfg = yaml.safe_load(f)
     with open(os.path.join(ROOT, "sources.yaml")) as f:
         srcs = yaml.safe_load(f) or {}
+    os.environ["TITLE_STYLE"] = cfg.get("title_style", "hinglish")
     state = load_state()
     counts = {}
     for p in state["posted"]:

@@ -1,4 +1,5 @@
 channel_name: "ClipVerse"          # shown as small watermark; change to your channel name
+title_style: hinglish              # hinglish = Hinglish hooks/titles for Indian viewers (English-only campaigns stay English)
 upload_to_youtube: true             # true = upload automatically (a copy is still saved in Releases)
 uploads_per_run: 1
 languages: [hi, en]

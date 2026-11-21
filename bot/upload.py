@@ -9,6 +9,11 @@ PERMISSION_LINE = {
 }
 
 
+def _hinglish(cand):
+    from .pick import hinglish
+    return hinglish(cand)
+
+
 def build_metadata(cand, meta, cat_cfg):
     """Title, description and tags for a Short (used for upload and for the .txt file)."""
     camp = cand.get("campaign") or {}
@@ -26,7 +31,7 @@ def build_metadata(cand, meta, cat_cfg):
         f"🎥 Credit: {cand['credit']} — full video: {cand['url']}",
         PERMISSION_LINE[cand["permission"]],
         "",
-        "Follow for daily GTA 6 moments 🔥🌴",
+        ("Roz GTA 6 ke best moments ke liye follow karo 🔥🌴" if _hinglish(cand) else "Follow for daily GTA 6 moments 🔥🌴"),
         " ".join(camp.get("hashtags", []) + ["#" + t.replace(" ", "") for t in tags[:5]]),
     ]))
     return title[:100], desc[:4900], tags

@@ -55,6 +55,7 @@ allowed_channels:
     proof: "https://contentrewards.com/c/campaigns/39753a1a-f1f3-491b-a8f6-0cfee0af0c97"
     campaign:
       name: "Dylan Page GTA VI Marathon (Content Rewards)"
+      english_only: true              # campaign wants English captions
       rules: "Dylan must be the main focus; #DylanPage in caption; English only; no added watermarks; $1 per 1K views; campaign ends when the marathon ends."
       mention: "Dylan Page"
       hashtags: ["#DylanPage"]
@@ -78,6 +79,7 @@ allowed_channels:
     proof: "https://contentrewards.com/c/campaigns/2eaa14fb-6927-4136-897e-b096e0d907d6"
     campaign:
       name: "KreekCraft GTA 6 (Content Rewards)"
+      english_only: true              # campaign wants English captions
       mention: "KreekCraft"
       hashtags: ["#GTA6", "#KreekCraft", "#GrandTheftAutoVI"]
       caption_line: "Watch KreekCraft on YouTube and Twitch!"
@@ -95,6 +97,7 @@ twitch_channels:
     proof: "https://contentrewards.com/c/campaigns/a5c63fad-cd53-4b81-9305-4a2d1696872a"
     campaign:
       name: "LACY GTA VI Marathon (Content Rewards)"
+      english_only: true              # campaign wants English captions
       mention: "LACY"
       hashtags: ["#LACY"]
       no_watermark: true
@@ -107,6 +110,7 @@ twitch_channels:
     proof: "https://contentrewards.com/c/campaigns/985dc674-c75e-44fc-ac87-1b1506324389"
     campaign:
       name: "Clix GTA VI Marathon (Content Rewards)"
+      english_only: true              # campaign wants English captions
       mention: "Clix"
       hashtags: ["#Clix"]
       no_watermark: true
