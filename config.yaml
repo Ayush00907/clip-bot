@@ -1,7 +1,8 @@
 channel_name: "ClipVerse"          # shown as small watermark; change to your channel name
 upload_to_youtube: true             # true = upload automatically (a copy is still saved in Releases)
 uploads_per_run: 1
-languages: [hi, en]                 # only clip videos in these languages
+languages: [hi, en]
+only_topic: ["gta 6", "gta6", "gta vi", "gtavi", "gta-6", "gta 06", "grand theft auto", "vice city"]   # channel is GTA 6 only: every source title must contain one of these                 # only clip videos in these languages
 privacy: public                     # public | unlisted | private  (use private for first tests)
 
 clip:
@@ -24,7 +25,7 @@ transcription:
 
 # YouTube category ids: 20 Gaming, 23 Comedy, 24 Entertainment
 categories:
-  gaming:  {youtube_category: 20, tags: ["gta 6", "gta vi", "gaming", "gaming clips", "shorts"]}
+  gaming:  {youtube_category: 20, tags: ["gta 6", "gta vi", "gta 6 gameplay", "gta 6 funny moments", "vice city", "gaming", "shorts"]}
   comedy:  {youtube_category: 23, tags: ["comedy", "funny", "standup", "hindi comedy", "shorts"]}
   prank:   {youtube_category: 24, tags: ["prank", "funny prank", "public prank", "shorts"]}
   default: {youtube_category: 24, tags: ["funny", "viral", "clips", "shorts"]}

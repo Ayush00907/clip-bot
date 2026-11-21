@@ -154,6 +154,10 @@ def gather(sources: dict, cfg: dict, posted: set):
                 c["title"], c["lang"], set(cfg.get("languages", ["hi", "en"]))):
             print(f"[skip] not Hindi/English: {c['title'][:70]}")
             continue
+        topic = [w.lower() for w in cfg.get("only_topic", [])]
+        if topic and not any(w in c["title"].lower() for w in topic):
+            print(f"[skip] not GTA 6: {c['title'][:70]}")
+            continue
         if c["title_must_contain"] and not any(w in c["title"].lower() for w in c["title_must_contain"]):
             continue
         if c["since"] and c["published"][:10] < str(c["since"]):

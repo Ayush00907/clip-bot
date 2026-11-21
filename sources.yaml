@@ -61,33 +61,18 @@ allowed_channels:
 #    picks the hottest topics (e.g. "GTA 6 funny moments") and searches CC-BY videos about them.
 trending:
   enabled: true
-  categories: [20, 23, 24]          # 20 Gaming, 23 Comedy, 24 Entertainment
+  categories: [20]                  # Gaming chart only
+  focus: "GTA 6"                    # every trending search must be about GTA 6
   queries_per_run: 2
 
-# 4) Fixed searches (one or two used per run, taking turns). Auto-discover CC-BY licensed videos on YouTube (fully automatic, free to reuse with credit)
+# 4) Fixed searches (one or two used per run, taking turns). CC-BY GTA 6 videos only.
 creative_commons_search:
-  - query: "GTA 6 gameplay"
-    category: gaming
-    layout: center_crop
-  - query: "GTA 6 funny moments"
-    category: gaming
-    layout: center_crop
-  - query: "funny prank"
-    category: prank
-  - query: "stand up comedy hindi"
-    category: comedy
-    language: hi
-  - query: "comedy sketch funny"
-    category: comedy
-  - query: "GTA 6 police chase"
-    category: gaming
-    layout: center_crop
-  - query: "GTA 6 glitch"
-    category: gaming
-    layout: center_crop
-  - query: "GTA 6 Vice City gameplay"
-    category: gaming
-    layout: center_crop
-  - query: "public prank india"
-    category: prank
-    language: hi
+  - {query: "GTA 6 funny moments", category: gaming, layout: center_crop}
+  - {query: "GTA 6 gameplay", category: gaming, layout: center_crop}
+  - {query: "GTA 6 police chase", category: gaming, layout: center_crop}
+  - {query: "GTA 6 glitch", category: gaming, layout: center_crop}
+  - {query: "GTA 6 Vice City gameplay", category: gaming, layout: center_crop}
+  - {query: "GTA 6 stunts", category: gaming, layout: center_crop}
+  - {query: "GTA 6 fails", category: gaming, layout: center_crop}
+  - {query: "GTA 6 hindi gameplay", category: gaming, layout: center_crop, language: hi}
+  - {query: "GTA 6 easter eggs", category: gaming, layout: center_crop}

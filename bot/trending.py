@@ -31,7 +31,7 @@ def trending_titles(region="IN", categories=(20, 23, 24), per_cat=25):
     return out
 
 
-def _gemini_queries(titles, n):
+def _gemini_queries(titles, n, focus=None):
     key = os.environ.get("GEMINI_API_KEY")
     if not key:
         return None
@@ -43,7 +43,7 @@ def _gemini_queries(titles, n):
 
 Give the {n} hottest TOPICS as short YouTube search queries (2-4 words, English, no channel names,
 no person names) that would find funny or exciting clip-worthy videos about the same topic,
-e.g. "GTA 6 funny moments". Prefer gaming, comedy, pranks, viral challenges.
+e.g. "GTA 6 funny moments". Prefer gaming, comedy, pranks, viral challenges.{(" EVERY query MUST be about " + focus + " and contain the words '" + focus + "'.") if focus else ""}
 Return JSON only: {{"queries": [{{"query": "...", "category": "gaming|comedy|prank|default"}}]}}"""
     for model in GEMINI_MODELS:
         try:
@@ -87,7 +87,11 @@ def trending_queries(cfg_trend: dict, region="IN"):
     if not titles:
         return []
     n = cfg_trend.get("queries_per_run", 2)
-    qs = _gemini_queries(titles, n) or _keyword_queries(titles, n)
+    focus = cfg_trend.get("focus")
+    qs = _gemini_queries(titles, n, focus) or _keyword_queries(titles, n)
+    if focus:  # make sure every query is on-topic
+        qs = [dict(q, query=q["query"] if focus.lower() in q["query"].lower() else f"{focus} {q['query']}",
+                   category="gaming") for q in qs]
     for q in qs:
         if q.get("category") == "gaming":
             q.setdefault("layout", "center_crop")

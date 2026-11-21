@@ -25,7 +25,7 @@ def build_metadata(cand, meta, cat_cfg):
         f"🎥 Credit: {cand['credit']} — full video: {cand['url']}",
         PERMISSION_LINE[cand["permission"]],
         "",
-        "Follow for daily funny clips, pranks & GTA 6 moments 🔥",
+        "Follow for daily GTA 6 moments 🔥🌴",
         " ".join(camp.get("hashtags", []) + ["#" + t.replace(" ", "") for t in tags[:5]]),
     ]))
     return title[:100], desc[:4900], tags
