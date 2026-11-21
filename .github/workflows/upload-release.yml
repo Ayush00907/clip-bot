@@ -1,0 +1,63 @@
+name: Upload Shorts from a release
+
+# Uploads already-made Shorts (saved in a "Shorts DD Mon YYYY" release) to YouTube.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, e.g. shorts-2026-11-21"
+        required: true
+      files:
+        description: "Which .mp4 files (space separated). Leave empty for all in the release."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: clipbot
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install google-api-python-client google-auth google-auth-oauthlib PyYAML requests
+      - name: Download the Shorts from the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p rel
+          if [ -n "${{ inputs.files }}" ]; then
+            for f in ${{ inputs.files }}; do
+              gh release download "${{ inputs.tag }}" -D rel -p "$f" -p "${f%.mp4}.txt"
+            done
+          else
+            gh release download "${{ inputs.tag }}" -D rel -p "*.mp4" -p "*.txt"
+          fi
+          ls -la rel
+      - name: Write YouTube credentials
+        env:
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_TOKEN: ${{ secrets.YT_TOKEN }}
+        run: |
+          printf '%s' "$YT_CLIENT_SECRET" > client_secret.json
+          printf '%s' "$YT_TOKEN" > token.json
+      - name: Upload to YouTube
+        run: python -m bot.upload_release rel
+      - name: Save logs
+        if: always()
+        run: |
+          rm -f client_secret.json token.json
+          git config user.name "clipbot"
+          git config user.email "clipbot@users.noreply.github.com"
+          git add state/posted.json SUBMIT_THESE.md 2>/dev/null || git add state/posted.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -q -m "Uploaded Shorts from release [skip ci]"
+          for i in 1 2 3; do git pull -q --rebase && git push -q && exit 0; sleep 5; done
