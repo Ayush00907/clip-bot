@@ -63,11 +63,21 @@ def download_live(url: str, out_dir: str, seconds: int = 300) -> str:
     hls = r.stdout.strip().splitlines()[0]
     out = os.path.join(out_dir, "source.mp4")
     cmd = ["ffmpeg", "-y", "-v", "error", "-reconnect", "1", "-reconnect_streamed", "1",
-           "-reconnect_delay_max", "5", "-i", hls,
-           "-t", str(seconds), "-c", "copy", "-bsf:a", "aac_adtstoasc", out]
-    print(f"[live] recording {seconds // 60} min of the live stream")
-    subprocess.run(cmd, check=True, timeout=seconds + 600)
-    return out
+           "-reconnect_at_eof", "1", "-reconnect_on_network_error", "1", "-reconnect_delay_max", "5",
+           "-i", hls, "-t", str(seconds), "-c", "copy", "-bsf:a", "aac_adtstoasc", out]
+    for attempt in range(2):
+        print(f"[live] recording {seconds // 60} min of the live stream (try {attempt + 1})")
+        subprocess.run(cmd, timeout=seconds + 600)
+        try:
+            got = probe(out)["duration"]
+        except Exception:
+            got = 0
+        print(f"[live] got {got:.0f} s")
+        if got >= 90:
+            return out
+    if got >= 30:
+        return out
+    raise RuntimeError("live recording too short")
 
 
 def download(url: str, out_dir: str, section=None) -> str:
