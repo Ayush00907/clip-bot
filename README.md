@@ -14,6 +14,15 @@ Runs on GitHub Actions 3× a day. For each run it does this:
 
 ---
 
+## 🔗 Clip a URL (on GitHub, uploads to YouTube)
+
+Actions → **Clip a URL** → Run workflow → paste the URL, pick how many clips, permission and credit.
+- Video **under 1 minute** → the whole video becomes one Short (vertical, hook, captions).
+- **Longer** video → cut into the number of Shorts you choose.
+- With **upload** ticked, every Short goes to the channel with title, description, hashtags and tags
+  (each upload ≈1,600 quota units; the 5 scheduled Shorts already use ≈8,500 of 10,000 per day).
+- The clips are also saved as a zip on the run page (Artifacts).
+
 ## 🎬 Local clipping tool (`clip_url.py`)
 
 Give it any video URL or file; it cuts the best moments into vertical Shorts on your computer.

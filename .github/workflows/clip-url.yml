@@ -1,7 +1,8 @@
 name: Clip a URL
 
-# Paste a video URL -> GitHub cuts it into vertical Shorts -> download the zip
-# from the run page (Artifacts section). Use on videos you own or may clip.
+# Paste a video URL -> under 1 min: the whole video becomes one Short; longer: it is cut into
+# as many Shorts as you ask -> uploaded to the YouTube channel (and saved as a zip on the run).
+# Only for videos you own or have permission to use.
 on:
   workflow_dispatch:
     inputs:
@@ -18,8 +19,24 @@ on:
         description: "hinglish or english hooks/titles"
         default: "hinglish"
       credit:
-        description: "Credit line at the bottom (optional), e.g. @Creator"
+        description: "Creator credit, e.g. @Creator (shown on the Short and in the description)"
         default: ""
+      permission:
+        description: "Why you may use this video"
+        type: choice
+        options: [own, written_permission, clipping_campaign, creative_commons]
+        default: own
+      upload:
+        description: "Upload the Shorts to YouTube (each upload uses ~1,600 of the 10,000 daily quota; the 5 scheduled Shorts use ~8,500)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: clipbot
+  cancel-in-progress: false
 
 jobs:
   clip:
@@ -43,10 +60,15 @@ jobs:
         with:
           path: ~/.cache/huggingface
           key: whisper-${{ hashFiles('config.yaml') }}
-      - name: Cookies for YouTube
+      - name: Credentials
         env:
           YT_COOKIES: ${{ secrets.YT_COOKIES }}
-        run: if [ -n "$YT_COOKIES" ]; then printf '%s' "$YT_COOKIES" > cookies.txt; fi
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_TOKEN: ${{ secrets.YT_TOKEN }}
+        run: |
+          if [ -n "$YT_COOKIES" ]; then printf '%s' "$YT_COOKIES" > cookies.txt; fi
+          printf '%s' "$YT_CLIENT_SECRET" > client_secret.json
+          printf '%s' "$YT_TOKEN" > token.json
       - name: Make the clips
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -56,8 +78,10 @@ jobs:
           LAYOUT: ${{ inputs.layout }}
           STYLE: ${{ inputs.style }}
           CREDIT: ${{ inputs.credit }}
+          PERMISSION: ${{ inputs.permission }}
+          UPLOAD: ${{ inputs.upload && '--upload' || '' }}
           PYTHONUNBUFFERED: "1"
-        run: python clip_url.py "$URL" -n "$COUNT" --layout "$LAYOUT" --style "$STYLE" --credit "$CREDIT"
+        run: python clip_url.py "$URL" -n "$COUNT" --layout "$LAYOUT" --style "$STYLE" --credit "$CREDIT" --permission "$PERMISSION" $UPLOAD
       - name: Download link for the clips
         uses: actions/upload-artifact@v4
         with:
@@ -65,5 +89,14 @@ jobs:
           path: clips/
           retention-days: 14
           if-no-files-found: error
+      - name: Save upload log
+        if: always() && inputs.upload
+        run: |
+          git config user.name "clipbot"
+          git config user.email "clipbot@users.noreply.github.com"
+          git add state/posted.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -q -m "Log Shorts uploaded via Clip a URL [skip ci]"
+          for i in 1 2 3; do git pull -q --rebase && git push -q && exit 0; sleep 5; done
       - if: always()
-        run: rm -f cookies.txt
+        run: rm -f cookies.txt client_secret.json token.json
