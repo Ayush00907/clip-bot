@@ -20,6 +20,25 @@ class WrongLanguage(Exception):
     pass
 
 
+SUBMIT = os.path.join(ROOT, "SUBMIT_THESE.md")
+
+
+def add_to_submit_list(short_id, cand, meta):
+    """Newest first: every uploaded campaign Short + where to submit it."""
+    ist = time.strftime("%d %b %Y, %I:%M %p IST", time.gmtime(time.time() + 19800))
+    row = (f"| {ist} | {cand['campaign'].get('name')} | https://youtube.com/shorts/{short_id} "
+           f"| [Submit here]({cand.get('proof', '')}) | {meta['title'][:60]} |\n")
+    head = ("# Campaign Shorts to submit\n\nNewest at the top. Open the campaign link, click **Submit clip**, "
+            "paste the Short link. (LACY & Clix want it within 30 min of posting.)\n\n"
+            "| Uploaded | Campaign | Short | Campaign page | Title |\n|---|---|---|---|---|\n")
+    rows = ""
+    if os.path.exists(SUBMIT):
+        txt = open(SUBMIT, encoding="utf-8").read()
+        rows = txt.split("|---|---|---|---|---|\n", 1)[-1] if "|---|" in txt else ""
+    with open(SUBMIT, "w", encoding="utf-8") as f:
+        f.write(head + row + rows)
+
+
 def load_state():
     try:
         with open(STATE) as f:
@@ -146,6 +165,8 @@ def main():
                 "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             })
             save_state(state)
+            if vid and cand.get("campaign"):
+                add_to_submit_list(vid, cand, meta)
     print(f"\nDone: {done} short(s).")
     return 0 if done else 1
 

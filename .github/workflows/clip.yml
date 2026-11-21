@@ -73,7 +73,7 @@ jobs:
         run: |
           git config user.name "clipbot"
           git config user.email "clipbot@users.noreply.github.com"
-          git add state/posted.json
+          git add state/posted.json SUBMIT_THESE.md 2>/dev/null || git add state/posted.json
           if git diff --cached --quiet; then echo "Nothing to save"; exit 0; fi
           git commit -q -m "Update posted clips log [skip ci]"
           for attempt in 1 2 3; do
