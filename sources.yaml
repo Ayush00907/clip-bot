@@ -7,6 +7,14 @@
 #    written_permission → creator said yes by email/DM (keep the screenshot!)
 # ─────────────────────────────────────────────────────────────
 
+# INDIAN YOUTUBERS WHO SAID YES: add them under allowed_channels with permission: written_permission,
+# e.g.
+#  - handle: "@SomeIndianGamer"
+#    permission: written_permission
+#    category: gaming
+#    credit: "Some Indian Gamer"
+#    proof: "Instagram DM, 22 Nov 2026 (screenshot saved)"
+
 # 1) Specific videos you are allowed to clip (your GTA 6 gameplay uploads go here)
 manual:
   # - url: https://www.youtube.com/watch?v=YOUR_GTA6_VIDEO
@@ -122,4 +130,8 @@ creative_commons_search:
   - {query: "GTA 6 stunts", category: gaming, layout: center_crop}
   - {query: "GTA 6 fails", category: gaming, layout: center_crop}
   - {query: "GTA 6 hindi gameplay", category: gaming, layout: center_crop, language: hi}
+  - {query: "GTA 6 hindi funny", category: gaming, layout: blur_fit, language: hi}
+  - {query: "GTA 6 live hindi", category: gaming, layout: blur_fit, language: hi}
+  - {query: "GTA 6 india", category: gaming, layout: blur_fit, language: hi}
+  - {query: "GTA 6 hindi commentary", category: gaming, layout: blur_fit, language: hi}
   - {query: "GTA 6 easter eggs", category: gaming, layout: center_crop}
