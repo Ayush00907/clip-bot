@@ -14,6 +14,29 @@ Runs on GitHub Actions 3× a day. For each run it does this:
 
 ---
 
+## 🎬 Local clipping tool (`clip_url.py`)
+
+Give it any video URL or file; it cuts the best moments into vertical Shorts on your computer.
+
+**One-time setup on Mac** (faster-whisper needs Python 3.12, not 3.15):
+```bash
+brew install python@3.12 ffmpeg yt-dlp
+cd ~/Desktop/clip-bot            # this repo
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+export GEMINI_API_KEY=your_key    # optional: smarter moment picking + titles
+```
+
+**Use it:**
+```bash
+python clip_url.py "https://www.youtube.com/watch?v=VIDEO_ID"          # 3 clips
+python clip_url.py URL -n 5 --layout center_crop --style english       # 5 full-screen clips
+python clip_url.py ~/Movies/my_gameplay.mp4 -n 4 --credit "@ClipVerseGTA6"
+```
+Clips appear in `clips/<video>/clip_N.mp4`, each with a `clip_N.txt` (title, hook, timestamps).
+Very long streams: only the most-replayed ~10 minutes are downloaded (add `--full` for everything).
+Use it on videos you own or have permission to clip.
+
 ## ⚠️ Read this first: why there's no "auto-rip Latent / random prank channels" mode
 
 - **Copyright strikes:** 3 strikes and the channel is deleted. India's Got Latent S2 is co-released with Netflix, so Content ID will claim clips of it.
