@@ -152,17 +152,24 @@ def gather(sources: dict, cfg: dict, posted: set):
     # queries taken in turn (a different one each run).
     fixed = sources.get("creative_commons_search") or []
     trend_cfg = sources.get("trending") or {}
+    # Search budget (each search = 100 quota units). With 1 search per run, runs take turns:
+    # one run searches a trending GTA 6 topic, the next one of the fixed searches.
+    budget = disc.get("searches_per_run", 1)
+    run_no = int(dt.datetime.utcnow().timestamp()) // 3600
     searches = []
-    if trend_cfg.get("enabled", True):
+    use_trending = trend_cfg.get("enabled", True) and (budget > 1 or run_no % 2 == 0 or not fixed)
+    if use_trending:
         from .trending import trending_queries
         try:
-            searches += trending_queries(trend_cfg, disc.get("region", "IN"))
+            searches += trending_queries(dict(trend_cfg, queries_per_run=min(
+                trend_cfg.get("queries_per_run", 1), budget)), disc.get("region", "IN"))
         except Exception as e:
             print(f"[trending] failed: {e}")
-    if fixed:
-        k = max(1, disc.get("searches_per_run", 3) - len(searches))
-        start = (int(dt.datetime.utcnow().timestamp()) // 3600) % len(fixed)
+    k = budget - len(searches)
+    if fixed and k > 0:
+        start = run_no % len(fixed)
         searches += [fixed[(start + i) % len(fixed)] for i in range(min(k, len(fixed)))]
+    searches = searches[:budget]
 
     for src in searches:
         print(f"[search] {src['query']}")
