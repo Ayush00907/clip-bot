@@ -1,6 +1,6 @@
 # ClipBot — automated clipping channel (GTA 6 · pranks · comedy)
 
-> **Current mode: make-only.** `upload_to_youtube: false` in `config.yaml`. Each scheduled run makes
+> **Current mode: auto-upload.** `upload_to_youtube: true` in `config.yaml`. Each scheduled run makes
 > one Short and saves it (with a `.txt` holding the title, description and campaign link) to
 > **Releases → "Shorts DD Mon YYYY"**. Download them and upload them yourself.
 
